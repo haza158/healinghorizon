@@ -28,6 +28,8 @@ async function savePosts(posts) {
 }
 
 module.exports = async (req, res) => {
+    console.log(`💬 Reply API Request: ${req.method} ${req.url}`);
+    
     // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
@@ -41,10 +43,13 @@ module.exports = async (req, res) => {
     try {
         const posts = await loadPosts();
         const urlParts = req.url.split('/');
-        const postId = urlParts[urlParts.indexOf('posts') + 1];
+        const postId = req.params.postId || urlParts[urlParts.indexOf('posts') + 1];
+        
+        console.log(`🔍 Looking for post: ${postId}`);
         
         const post = posts.find(p => p.id === postId);
         if (!post) {
+            console.log('❌ Post not found');
             res.status(404).json({ error: 'Post not found' });
             return;
         }
@@ -59,6 +64,7 @@ module.exports = async (req, res) => {
             req.on('end', async () => {
                 try {
                     const newReply = JSON.parse(body);
+                    console.log('💬 Adding reply to post:', post.title);
                     
                     if (!newReply.content) {
                         res.status(400).json({ error: 'Content is required' });
@@ -73,17 +79,21 @@ module.exports = async (req, res) => {
                     
                     const saved = await savePosts(posts);
                     if (saved) {
+                        console.log('✅ Reply saved successfully');
                         res.status(201).json({ success: true, reply: newReply });
                     } else {
+                        console.log('❌ Failed to save reply');
                         res.status(500).json({ error: 'Failed to save reply' });
                     }
                 } catch (error) {
+                    console.log('❌ Invalid JSON:', error);
                     res.status(400).json({ error: 'Invalid JSON' });
                 }
             });
         } else if (req.method === 'DELETE') {
             // Delete reply
-            const replyId = urlParts[urlParts.length - 1];
+            const replyId = req.params.replyId || urlParts[urlParts.length - 1];
+            console.log('🗑️ Deleting reply:', replyId);
             
             let body = '';
             req.on('data', chunk => {
@@ -115,11 +125,14 @@ module.exports = async (req, res) => {
                     const saved = await savePosts(posts);
                     
                     if (saved) {
+                        console.log('✅ Reply deleted successfully');
                         res.status(200).json({ success: true });
                     } else {
+                        console.log('❌ Failed to delete reply');
                         res.status(500).json({ error: 'Failed to delete reply' });
                     }
                 } catch (error) {
+                    console.log('❌ Invalid delete request:', error);
                     res.status(400).json({ error: 'Invalid request' });
                 }
             });
@@ -127,7 +140,7 @@ module.exports = async (req, res) => {
             res.status(405).json({ error: 'Method not allowed' });
         }
     } catch (error) {
-        console.error('API Error:', error);
+        console.error('❌ Reply API Error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };

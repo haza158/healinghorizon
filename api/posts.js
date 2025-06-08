@@ -39,6 +39,8 @@ async function savePosts(posts) {
 }
 
 module.exports = async (req, res) => {
+    console.log(`📡 API Request: ${req.method} ${req.url}`);
+    
     // Set CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
@@ -51,9 +53,11 @@ module.exports = async (req, res) => {
 
     try {
         const posts = await loadPosts();
+        console.log(`📊 Current posts count: ${posts.length}`);
 
         if (req.method === 'GET') {
             // Get all posts
+            console.log('✅ Sending posts to client');
             res.status(200).json({ posts });
         } else if (req.method === 'POST') {
             // Create new post
@@ -65,6 +69,7 @@ module.exports = async (req, res) => {
             req.on('end', async () => {
                 try {
                     const newPost = JSON.parse(body);
+                    console.log('📝 Creating new post:', newPost.title);
                     
                     // Validate required fields
                     if (!newPost.title || !newPost.content) {
@@ -82,17 +87,21 @@ module.exports = async (req, res) => {
 
                     const saved = await savePosts(posts);
                     if (saved) {
+                        console.log('✅ Post saved successfully');
                         res.status(201).json({ success: true, post: newPost });
                     } else {
+                        console.log('❌ Failed to save post');
                         res.status(500).json({ error: 'Failed to save post' });
                     }
                 } catch (error) {
+                    console.log('❌ Invalid JSON:', error);
                     res.status(400).json({ error: 'Invalid JSON' });
                 }
             });
         } else if (req.method === 'DELETE') {
             // Delete post
-            const postId = req.url.split('/').pop();
+            const postId = req.params.id || req.url.split('/').pop();
+            console.log('🗑️ Deleting post:', postId);
             
             let body = '';
             req.on('data', chunk => {
@@ -119,11 +128,14 @@ module.exports = async (req, res) => {
                     const saved = await savePosts(posts);
                     
                     if (saved) {
+                        console.log('✅ Post deleted successfully');
                         res.status(200).json({ success: true });
                     } else {
+                        console.log('❌ Failed to delete post');
                         res.status(500).json({ error: 'Failed to delete post' });
                     }
                 } catch (error) {
+                    console.log('❌ Invalid delete request:', error);
                     res.status(400).json({ error: 'Invalid request' });
                 }
             });
@@ -131,7 +143,7 @@ module.exports = async (req, res) => {
             res.status(405).json({ error: 'Method not allowed' });
         }
     } catch (error) {
-        console.error('API Error:', error);
+        console.error('❌ API Error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 };
