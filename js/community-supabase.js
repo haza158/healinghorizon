@@ -14,10 +14,17 @@ class SupabaseCommunityForum {
     }
 
     async init() {
+        console.log('Initializing forum...');
         if (this.isConfigured) {
             await this.loadPostsFromSupabase();
         } else {
-            this.renderConnectionMessage();
+            if (this.fallbackForum) {
+                // Use fallback forum's posts
+                this.posts = this.fallbackForum.posts;
+                this.renderPosts();
+            } else {
+                this.renderConnectionMessage();
+            }
         }
     }
 
@@ -41,6 +48,7 @@ class SupabaseCommunityForum {
 
     async loadPostsFromSupabase() {
         try {
+            console.log('Loading posts from Supabase...');
             const { data: posts, error: postsError } = await supabase
                 .from('posts')
                 .select(`
@@ -56,6 +64,7 @@ class SupabaseCommunityForum {
             }
 
             this.posts = posts || [];
+            console.log('Loaded posts:', this.posts);
             this.renderPosts();
         } catch (error) {
             console.error('Error connecting to Supabase:', error);
@@ -64,15 +73,21 @@ class SupabaseCommunityForum {
     }
 
     async createPost(author, title, content) {
-        if (!this.isConfigured) {
-            if (this.fallbackForum) {
-                return this.fallbackForum.createPost(author, title, content);
-            }
+        console.log('Creating post:', { author, title, content });
+        
+        if (!title.trim() || !content.trim()) {
+            alert('Please fill in both title and content fields.');
             return;
         }
 
-        if (!title.trim() || !content.trim()) {
-            alert('Please fill in both title and content fields.');
+        if (!this.isConfigured) {
+            if (this.fallbackForum) {
+                this.fallbackForum.createPost(author, title, content);
+                this.posts = this.fallbackForum.posts;
+                this.renderPosts();
+                this.clearForm();
+                return;
+            }
             return;
         }
 
@@ -94,16 +109,8 @@ class SupabaseCommunityForum {
                 return;
             }
 
-            // Clear form
-            const authorInput = document.getElementById('authorName');
-            const titleInput = document.getElementById('postTitle');
-            const contentInput = document.getElementById('postContent');
-            
-            if (authorInput) authorInput.value = '';
-            if (titleInput) titleInput.value = '';
-            if (contentInput) contentInput.value = '';
-
-            // Reload posts to show the new post
+            console.log('Post created successfully:', data);
+            this.clearForm();
             await this.loadPostsFromSupabase();
         } catch (error) {
             console.error('Error creating post:', error);
@@ -111,16 +118,29 @@ class SupabaseCommunityForum {
         }
     }
 
+    clearForm() {
+        const authorInput = document.getElementById('authorName');
+        const titleInput = document.getElementById('postTitle');
+        const contentInput = document.getElementById('postContent');
+        
+        if (authorInput) authorInput.value = '';
+        if (titleInput) titleInput.value = '';
+        if (contentInput) contentInput.value = '';
+    }
+
     async addReply(postId, author, content) {
-        if (!this.isConfigured) {
-            if (this.fallbackForum) {
-                return this.fallbackForum.addReply(postId, author, content);
-            }
+        if (!content.trim()) {
+            alert('Please enter a reply message.');
             return;
         }
 
-        if (!content.trim()) {
-            alert('Please enter a reply message.');
+        if (!this.isConfigured) {
+            if (this.fallbackForum) {
+                this.fallbackForum.addReply(postId, author, content);
+                this.posts = this.fallbackForum.posts;
+                this.renderPosts();
+                return;
+            }
             return;
         }
 
@@ -142,7 +162,6 @@ class SupabaseCommunityForum {
                 return;
             }
 
-            // Reload posts to show new reply
             await this.loadPostsFromSupabase();
         } catch (error) {
             console.error('Error creating reply:', error);
@@ -189,6 +208,8 @@ class SupabaseCommunityForum {
         const container = document.getElementById('postsContainer');
         if (!container) return;
         
+        console.log('Rendering posts:', this.posts);
+        
         if (!this.posts || this.posts.length === 0) {
             container.innerHTML = `
                 <div class="no-posts">
@@ -202,7 +223,7 @@ class SupabaseCommunityForum {
             <div class="post" data-post-id="${post.id}">
                 <div class="post-header">
                     <h4>${this.escapeHtml(post.title)}</h4>
-                    <span class="post-meta">by ${this.escapeHtml(post.author)} • ${this.formatTimestamp(post.created_at)}</span>
+                    <span class="post-meta">by ${this.escapeHtml(post.author)} • ${this.formatTimestamp(post.created_at || post.timestamp)}</span>
                 </div>
                 <p class="post-content">${this.escapeHtml(post.content)}</p>
                 
@@ -223,12 +244,12 @@ class SupabaseCommunityForum {
                 <!-- Replies -->
                 <div class="replies-container">
                     ${post.replies ? post.replies
-                        .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+                        .sort((a, b) => new Date(a.created_at || a.timestamp) - new Date(b.created_at || b.timestamp))
                         .map(reply => `
                         <div class="reply">
                             <div class="reply-header">
                                 <strong>${this.escapeHtml(reply.author)}</strong>
-                                <span class="reply-time">${this.formatTimestamp(reply.created_at)}</span>
+                                <span class="reply-time">${this.formatTimestamp(reply.created_at || reply.timestamp)}</span>
                             </div>
                             <p>${this.escapeHtml(reply.content)}</p>
                         </div>
@@ -276,7 +297,6 @@ class LocalStorageForum {
     constructor() {
         this.posts = this.loadPosts();
         this.postIdCounter = this.getNextPostId();
-        this.renderPosts();
     }
 
     loadPosts() {
@@ -316,16 +336,6 @@ class LocalStorageForum {
         this.postIdCounter++;
         this.savePosts();
         this.savePostIdCounter();
-        this.renderPosts();
-
-        // Clear form
-        const authorInput = document.getElementById('authorName');
-        const titleInput = document.getElementById('postTitle');
-        const contentInput = document.getElementById('postContent');
-        
-        if (authorInput) authorInput.value = '';
-        if (titleInput) titleInput.value = '';
-        if (contentInput) contentInput.value = '';
     }
 
     addReply(postId, author, content) {
@@ -334,7 +344,7 @@ class LocalStorageForum {
             return;
         }
 
-        const post = this.posts.find(p => p.id === postId);
+        const post = this.posts.find(p => p.id == postId);
         if (post) {
             const reply = {
                 id: Date.now(),
@@ -345,7 +355,6 @@ class LocalStorageForum {
 
             post.replies.push(reply);
             this.savePosts();
-            this.renderPosts();
         }
     }
 
@@ -382,55 +391,6 @@ class LocalStorageForum {
         }
     }
 
-    renderPosts() {
-        const container = document.getElementById('postsContainer');
-        if (!container) return;
-        
-        if (this.posts.length === 0) {
-            container.innerHTML = `
-                <div class="no-posts">
-                    <p>No posts yet. Be the first to share something with the community!</p>
-                </div>
-            `;
-            return;
-        }
-
-        container.innerHTML = this.posts.map(post => `
-            <div class="post" data-post-id="${post.id}">
-                <div class="post-header">
-                    <h4>${this.escapeHtml(post.title)}</h4>
-                    <span class="post-meta">by ${this.escapeHtml(post.author)} • ${this.formatTimestamp(post.timestamp)}</span>
-                </div>
-                <p class="post-content">${this.escapeHtml(post.content)}</p>
-                
-                <div class="post-actions">
-                    <button class="reply-button" onclick="window.forum.toggleReplyBox(${post.id})">
-                        Reply (${post.replies.length})
-                    </button>
-                </div>
-
-                <div id="replyBox-${post.id}" class="reply-box" style="display: none;">
-                    <input type="text" id="replyAuthor-${post.id}" placeholder="Your name (optional)" maxlength="50">
-                    <textarea id="replyContent-${post.id}" placeholder="Write your reply..." rows="3" maxlength="500"></textarea>
-                    <button onclick="window.forum.submitReply(${post.id})">Post Reply</button>
-                    <button onclick="window.forum.toggleReplyBox(${post.id})" class="cancel-btn">Cancel</button>
-                </div>
-
-                <div class="replies-container">
-                    ${post.replies.map(reply => `
-                        <div class="reply">
-                            <div class="reply-header">
-                                <strong>${this.escapeHtml(reply.author)}</strong>
-                                <span class="reply-time">${this.formatTimestamp(reply.timestamp)}</span>
-                            </div>
-                            <p>${this.escapeHtml(reply.content)}</p>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `).join('');
-    }
-
     submitReply(postId) {
         const authorInput = document.getElementById(`replyAuthor-${postId}`);
         const contentInput = document.getElementById(`replyContent-${postId}`);
@@ -455,6 +415,8 @@ class LocalStorageForum {
 let forum;
 
 document.addEventListener('DOMContentLoaded', async function() {
+    console.log('DOM loaded, initializing forum...');
+    
     forum = new SupabaseCommunityForum();
     
     // Initialize the forum
@@ -463,17 +425,26 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Set up event listener for create post button
     const createPostButton = document.getElementById('createPostButton');
     if (createPostButton) {
-        createPostButton.addEventListener('click', async function() {
+        createPostButton.addEventListener('click', async function(e) {
+            e.preventDefault();
+            console.log('Create post button clicked');
+            
             const author = document.getElementById('authorName').value;
             const title = document.getElementById('postTitle').value;
             const content = document.getElementById('postContent').value;
+            
+            console.log('Form values:', { author, title, content });
             
             if (forum) {
                 await forum.createPost(author, title, content);
             }
         });
+    } else {
+        console.error('Create post button not found!');
     }
     
     // Make forum available globally for HTML onclick handlers
     window.forum = forum;
+    
+    console.log('Forum initialization complete');
 });
