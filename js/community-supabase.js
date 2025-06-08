@@ -8,7 +8,6 @@ class SupabaseCommunityForum {
         
         if (!this.isConfigured) {
             console.warn('Supabase not configured, falling back to localStorage');
-            // Import and use the original localStorage-based forum
             this.initializeFallback();
         }
         
@@ -24,25 +23,25 @@ class SupabaseCommunityForum {
     }
 
     initializeFallback() {
-        // Use the original localStorage-based forum as fallback
         this.fallbackForum = new LocalStorageForum();
     }
 
     renderConnectionMessage() {
         const container = document.getElementById('postsContainer');
-        container.innerHTML = `
-            <div class="supabase-setup-message">
-                <h3>🔗 Connect to Supabase for Shared Community</h3>
-                <p>To enable shared posts and replies across all users, please connect to Supabase using the "Connect to Supabase" button in the top right corner.</p>
-                <p>Currently using local storage - posts are only visible to you.</p>
-                <button onclick="window.location.reload()" class="refresh-btn">Refresh after connecting</button>
-            </div>
-        `;
+        if (container) {
+            container.innerHTML = `
+                <div class="supabase-setup-message">
+                    <h3>🔗 Connect to Supabase for Shared Community</h3>
+                    <p>To enable shared posts and replies across all users, please connect to Supabase using the "Connect to Supabase" button in the top right corner.</p>
+                    <p>Currently using local storage - posts are only visible to you.</p>
+                    <button onclick="window.location.reload()" class="refresh-btn">Refresh after connecting</button>
+                </div>
+            `;
+        }
     }
 
     async loadPostsFromSupabase() {
         try {
-            // Load posts with their replies
             const { data: posts, error: postsError } = await supabase
                 .from('posts')
                 .select(`
@@ -165,6 +164,8 @@ class SupabaseCommunityForum {
 
     toggleReplyBox(postId) {
         const replyBox = document.getElementById(`replyBox-${postId}`);
+        if (!replyBox) return;
+        
         const isHidden = replyBox.style.display === 'none' || !replyBox.style.display;
         
         // Hide all other reply boxes
@@ -183,6 +184,7 @@ class SupabaseCommunityForum {
 
     renderPosts() {
         const container = document.getElementById('postsContainer');
+        if (!container) return;
         
         if (!this.posts || this.posts.length === 0) {
             container.innerHTML = `
@@ -237,6 +239,8 @@ class SupabaseCommunityForum {
         const authorInput = document.getElementById(`replyAuthor-${postId}`);
         const contentInput = document.getElementById(`replyContent-${postId}`);
         
+        if (!authorInput || !contentInput) return;
+        
         await this.addReply(postId, authorInput.value, contentInput.value);
         
         // Clear inputs and hide reply box
@@ -253,16 +257,18 @@ class SupabaseCommunityForum {
 
     renderError(message) {
         const container = document.getElementById('postsContainer');
-        container.innerHTML = `
-            <div class="error-message">
-                <p>⚠️ ${message}</p>
-                <button onclick="window.location.reload()">Try Again</button>
-            </div>
-        `;
+        if (container) {
+            container.innerHTML = `
+                <div class="error-message">
+                    <p>⚠️ ${message}</p>
+                    <button onclick="window.location.reload()">Try Again</button>
+                </div>
+            `;
+        }
     }
 }
 
-// Fallback LocalStorage Forum (original implementation)
+// Fallback LocalStorage Forum
 class LocalStorageForum {
     constructor() {
         this.posts = this.loadPosts();
@@ -309,9 +315,14 @@ class LocalStorageForum {
         this.savePostIdCounter();
         this.renderPosts();
 
-        document.getElementById('authorName').value = '';
-        document.getElementById('postTitle').value = '';
-        document.getElementById('postContent').value = '';
+        // Clear form
+        const authorInput = document.getElementById('authorName');
+        const titleInput = document.getElementById('postTitle');
+        const contentInput = document.getElementById('postContent');
+        
+        if (authorInput) authorInput.value = '';
+        if (titleInput) titleInput.value = '';
+        if (contentInput) contentInput.value = '';
     }
 
     addReply(postId, author, content) {
@@ -352,6 +363,8 @@ class LocalStorageForum {
 
     toggleReplyBox(postId) {
         const replyBox = document.getElementById(`replyBox-${postId}`);
+        if (!replyBox) return;
+        
         const isHidden = replyBox.style.display === 'none' || !replyBox.style.display;
         
         document.querySelectorAll('.reply-box').forEach(box => {
@@ -368,6 +381,7 @@ class LocalStorageForum {
 
     renderPosts() {
         const container = document.getElementById('postsContainer');
+        if (!container) return;
         
         if (this.posts.length === 0) {
             container.innerHTML = `
@@ -418,6 +432,8 @@ class LocalStorageForum {
         const authorInput = document.getElementById(`replyAuthor-${postId}`);
         const contentInput = document.getElementById(`replyContent-${postId}`);
         
+        if (!authorInput || !contentInput) return;
+        
         this.addReply(postId, authorInput.value, contentInput.value);
         
         authorInput.value = '';
@@ -445,8 +461,11 @@ function createPost() {
     const title = document.getElementById('postTitle').value;
     const content = document.getElementById('postContent').value;
     
-    forum.createPost(author, title, content);
+    if (forum) {
+        forum.createPost(author, title, content);
+    }
 }
 
 // Make forum available globally for HTML onclick handlers
 window.forum = forum;
+window.createPost = createPost;
