@@ -29,8 +29,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Check if Supabase is properly configured
 export const isSupabaseConfigured = () => {
-  return supabaseUrl !== 'your_supabase_url_here' && 
-         supabaseAnonKey !== 'your_supabase_anon_key_here' &&
+  return supabaseUrl !== 'https://efvxihgndvaevspelpsa.supabase.co' && 
+         supabaseAnonKey !== 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmdnhpaGduZHZhZXZzcGVscHNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzOTQ0NTksImV4cCI6MjA2NDk3MDQ1OX0.Nwzeta4FOJGRC0J0xam8AwY6MUbnj7QxDV_MqwsaX2c' &&
          supabaseUrl && supabaseAnonKey &&
          supabaseUrl.includes('supabase.co');
 };
