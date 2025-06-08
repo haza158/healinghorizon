@@ -43,18 +43,21 @@ const getEnvVar = (name) => {
     return null;
 };
 
-const supabaseUrl = getEnvVar('VITE_SUPABASE_URL') || 'https://efvxihgndvaevspelpsa.supabase.co';
-const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmdnhpaGduZHZhZXZzcGVscHNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzOTQ0NTksImV4cCI6MjA2NDk3MDQ1OX0.Nwzeta4FOJGRC0J0xam8AwY6MUbnj7QxDV_MqwsaX2c';
+// Get the actual Supabase credentials from environment
+const supabaseUrl = getEnvVar('VITE_SUPABASE_URL');
+const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY');
 
 // Initialize Supabase client
 async function initializeSupabase() {
     const loaded = await loadSupabase();
-    if (loaded && createClient) {
+    if (loaded && createClient && supabaseUrl && supabaseAnonKey) {
         supabase = createClient(supabaseUrl, supabaseAnonKey);
-        console.log('Supabase client initialized successfully');
+        console.log('Supabase client initialized successfully with URL:', supabaseUrl);
         return true;
     } else {
-        console.log('Supabase could not be loaded - using localStorage fallback');
+        console.log('Supabase could not be loaded or credentials missing - using localStorage fallback');
+        console.log('URL:', supabaseUrl ? 'Present' : 'Missing');
+        console.log('Key:', supabaseAnonKey ? 'Present' : 'Missing');
         return false;
     }
 }
@@ -62,9 +65,8 @@ async function initializeSupabase() {
 // Check if Supabase is properly configured
 const isSupabaseConfigured = () => {
     return supabase !== null &&
-           supabaseUrl !== 'https://efvxihgndvaevspelpsa.supabase.co' && 
-           supabaseAnonKey !== 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmdnhpaGduZHZhZXZzcGVscHNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzOTQ0NTksImV4cCI6MjA2NDk3MDQ1OX0.Nwzeta4FOJGRC0J0xam8AwY6MUbnj7QxDV_MqwsaX2c' &&
-           supabaseUrl && supabaseAnonKey &&
+           supabaseUrl && 
+           supabaseAnonKey &&
            supabaseUrl.includes('supabase.co');
 };
 

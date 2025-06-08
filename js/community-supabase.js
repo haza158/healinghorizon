@@ -29,6 +29,7 @@ class SupabaseCommunityForum {
                 this.renderConnectionMessage();
             }
         } else {
+            console.log('Loading posts from Supabase...');
             await this.loadPostsFromSupabase();
         }
     }
@@ -64,16 +65,16 @@ class SupabaseCommunityForum {
 
             if (postsError) {
                 console.error('Error loading posts:', postsError);
-                this.renderError('Failed to load posts');
+                this.renderError('Failed to load posts: ' + postsError.message);
                 return;
             }
 
             this.posts = posts || [];
-            console.log('Loaded posts:', this.posts);
+            console.log('Loaded posts from Supabase:', this.posts);
             this.renderPosts();
         } catch (error) {
             console.error('Error connecting to Supabase:', error);
-            this.renderError('Failed to connect to database');
+            this.renderError('Failed to connect to database: ' + error.message);
         }
     }
 
@@ -95,11 +96,13 @@ class SupabaseCommunityForum {
                 return;
             } else {
                 console.error('Fallback forum not initialized');
+                alert('Unable to create post. Please refresh the page and try again.');
                 return;
             }
         }
 
         try {
+            console.log('Creating post in Supabase...');
             const { data, error } = await supabase
                 .from('posts')
                 .insert([
@@ -113,7 +116,7 @@ class SupabaseCommunityForum {
 
             if (error) {
                 console.error('Error creating post:', error);
-                alert('Failed to create post. Please try again.');
+                alert('Failed to create post: ' + error.message);
                 return;
             }
 
@@ -122,7 +125,7 @@ class SupabaseCommunityForum {
             await this.loadPostsFromSupabase();
         } catch (error) {
             console.error('Error creating post:', error);
-            alert('Failed to create post. Please try again.');
+            alert('Failed to create post: ' + error.message);
         }
     }
 
@@ -153,6 +156,7 @@ class SupabaseCommunityForum {
         }
 
         try {
+            console.log('Creating reply in Supabase...');
             const { data, error } = await supabase
                 .from('replies')
                 .insert([
@@ -166,14 +170,15 @@ class SupabaseCommunityForum {
 
             if (error) {
                 console.error('Error creating reply:', error);
-                alert('Failed to create reply. Please try again.');
+                alert('Failed to create reply: ' + error.message);
                 return;
             }
 
+            console.log('Reply created successfully:', data);
             await this.loadPostsFromSupabase();
         } catch (error) {
             console.error('Error creating reply:', error);
-            alert('Failed to create reply. Please try again.');
+            alert('Failed to create reply: ' + error.message);
         }
     }
 
@@ -222,6 +227,7 @@ class SupabaseCommunityForum {
             container.innerHTML = `
                 <div class="no-posts">
                     <p>No posts yet. Be the first to share something with the community!</p>
+                    ${!this.isConfigured ? '<p><em>Note: Currently using local storage. Connect to Supabase for shared posts.</em></p>' : ''}
                 </div>
             `;
             return;
@@ -364,6 +370,58 @@ class LocalStorageForum {
             post.replies.push(reply);
             this.savePosts();
         }
+    }
+
+    formatTimestamp(timestamp) {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diffInHours = (now - date) / (1000 * 60 * 60);
+
+        if (diffInHours < 1) {
+            const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+            return diffInMinutes <= 1 ? 'Just now' : `${diffInMinutes} minutes ago`;
+        } else if (diffInHours < 24) {
+            return `${Math.floor(diffInHours)} hours ago`;
+        } else {
+            return date.toLocaleDateString();
+        }
+    }
+
+    toggleReplyBox(postId) {
+        const replyBox = document.getElementById(`replyBox-${postId}`);
+        if (!replyBox) return;
+        
+        const isHidden = replyBox.style.display === 'none' || !replyBox.style.display;
+        
+        document.querySelectorAll('.reply-box').forEach(box => {
+            box.style.display = 'none';
+        });
+
+        replyBox.style.display = isHidden ? 'block' : 'none';
+        
+        if (isHidden) {
+            const textarea = replyBox.querySelector('textarea');
+            if (textarea) textarea.focus();
+        }
+    }
+
+    submitReply(postId) {
+        const authorInput = document.getElementById(`replyAuthor-${postId}`);
+        const contentInput = document.getElementById(`replyContent-${postId}`);
+        
+        if (!authorInput || !contentInput) return;
+        
+        this.addReply(postId, authorInput.value, contentInput.value);
+        
+        authorInput.value = '';
+        contentInput.value = '';
+        this.toggleReplyBox(postId);
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 }
 
