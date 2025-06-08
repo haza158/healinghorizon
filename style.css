@@ -431,7 +431,7 @@ button:hover {
 }
 
 .delete-post-btn {
-    background: none;
+    background: #000000;
     border: none;
     font-size: 16px;
     cursor: pointer;
