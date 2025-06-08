@@ -1,57 +1,53 @@
-// Community Forum with Supabase Integration
+// Community Forum with localStorage fallback (works without Supabase)
 import { supabase, isSupabaseConfigured, initializeSupabase } from './supabase-client.js';
 
-class SupabaseCommunityForum {
+class CommunityForum {
     constructor() {
         this.isConfigured = false;
-        this.fallbackForum = null;
         this.posts = [];
         this.supabaseLoaded = false;
+        this.postIdCounter = this.getNextPostId();
     }
 
     async init() {
-        console.log('Initializing forum...');
+        console.log('Initializing community forum...');
         
-        // Try to initialize Supabase
+        // Try to initialize Supabase (optional)
         this.supabaseLoaded = await initializeSupabase();
         this.isConfigured = this.supabaseLoaded && isSupabaseConfigured();
         
-        console.log('Supabase loaded:', this.supabaseLoaded);
-        console.log('Supabase configured:', this.isConfigured);
-        
-        if (!this.supabaseLoaded || !this.isConfigured) {
-            console.log('Using localStorage fallback');
-            this.initializeFallback();
-            if (this.fallbackForum) {
-                this.posts = this.fallbackForum.posts;
-                this.renderPosts();
-            } else {
-                this.renderConnectionMessage();
-            }
-        } else {
-            console.log('Loading posts from Supabase...');
+        if (this.isConfigured) {
+            console.log('Using Supabase for shared posts');
             await this.loadPostsFromSupabase();
+        } else {
+            console.log('Using localStorage for posts (local only)');
+            this.loadPostsFromLocalStorage();
         }
+        
+        this.renderPosts();
     }
 
-    initializeFallback() {
-        this.fallbackForum = new LocalStorageForum();
+    // LocalStorage methods
+    loadPostsFromLocalStorage() {
+        const savedPosts = localStorage.getItem('communityPosts');
+        this.posts = savedPosts ? JSON.parse(savedPosts) : [];
+        console.log('Loaded posts from localStorage:', this.posts);
     }
 
-    renderConnectionMessage() {
-        const container = document.getElementById('postsContainer');
-        if (container) {
-            container.innerHTML = `
-                <div class="supabase-setup-message">
-                    <h3>🔗 Connect to Supabase for Shared Community</h3>
-                    <p>To enable shared posts and replies across all users, please connect to Supabase using the "Connect to Supabase" button in the top right corner.</p>
-                    <p>Currently using local storage - posts are only visible to you.</p>
-                    <button onclick="window.location.reload()" class="refresh-btn">Refresh after connecting</button>
-                </div>
-            `;
-        }
+    savePostsToLocalStorage() {
+        localStorage.setItem('communityPosts', JSON.stringify(this.posts));
     }
 
+    getNextPostId() {
+        const savedCounter = localStorage.getItem('postIdCounter');
+        return savedCounter ? parseInt(savedCounter) + 1 : 1;
+    }
+
+    savePostIdCounter() {
+        localStorage.setItem('postIdCounter', this.postIdCounter.toString());
+    }
+
+    // Supabase methods
     async loadPostsFromSupabase() {
         try {
             console.log('Loading posts from Supabase...');
@@ -65,16 +61,17 @@ class SupabaseCommunityForum {
 
             if (postsError) {
                 console.error('Error loading posts:', postsError);
-                this.renderError('Failed to load posts: ' + postsError.message);
+                console.log('Falling back to localStorage');
+                this.loadPostsFromLocalStorage();
                 return;
             }
 
             this.posts = posts || [];
             console.log('Loaded posts from Supabase:', this.posts);
-            this.renderPosts();
         } catch (error) {
             console.error('Error connecting to Supabase:', error);
-            this.renderError('Failed to connect to database: ' + error.message);
+            console.log('Falling back to localStorage');
+            this.loadPostsFromLocalStorage();
         }
     }
 
@@ -86,47 +83,63 @@ class SupabaseCommunityForum {
             return;
         }
 
-        if (!this.isConfigured || !this.supabaseLoaded) {
-            console.log('Using fallback forum for post creation');
-            if (this.fallbackForum) {
-                this.fallbackForum.createPost(author, title, content);
-                this.posts = this.fallbackForum.posts;
-                this.renderPosts();
-                this.clearForm();
-                return;
-            } else {
-                console.error('Fallback forum not initialized');
-                alert('Unable to create post. Please refresh the page and try again.');
-                return;
+        const authorName = author.trim() || 'Anonymous';
+        const postTitle = title.trim();
+        const postContent = content.trim();
+
+        if (this.isConfigured) {
+            // Try Supabase first
+            try {
+                console.log('Creating post in Supabase...');
+                const { data, error } = await supabase
+                    .from('posts')
+                    .insert([
+                        {
+                            title: postTitle,
+                            content: postContent,
+                            author: authorName
+                        }
+                    ])
+                    .select();
+
+                if (error) {
+                    console.error('Error creating post in Supabase:', error);
+                    // Fall back to localStorage
+                    this.createPostInLocalStorage(authorName, postTitle, postContent);
+                } else {
+                    console.log('Post created successfully in Supabase:', data);
+                    this.clearForm();
+                    await this.loadPostsFromSupabase();
+                    this.renderPosts();
+                }
+            } catch (error) {
+                console.error('Error creating post in Supabase:', error);
+                // Fall back to localStorage
+                this.createPostInLocalStorage(authorName, postTitle, postContent);
             }
+        } else {
+            // Use localStorage
+            this.createPostInLocalStorage(authorName, postTitle, postContent);
         }
+    }
 
-        try {
-            console.log('Creating post in Supabase...');
-            const { data, error } = await supabase
-                .from('posts')
-                .insert([
-                    {
-                        title: title.trim(),
-                        content: content.trim(),
-                        author: author.trim() || 'Anonymous'
-                    }
-                ])
-                .select();
+    createPostInLocalStorage(author, title, content) {
+        const newPost = {
+            id: this.postIdCounter,
+            author: author,
+            title: title,
+            content: content,
+            created_at: new Date().toISOString(),
+            replies: []
+        };
 
-            if (error) {
-                console.error('Error creating post:', error);
-                alert('Failed to create post: ' + error.message);
-                return;
-            }
-
-            console.log('Post created successfully:', data);
-            this.clearForm();
-            await this.loadPostsFromSupabase();
-        } catch (error) {
-            console.error('Error creating post:', error);
-            alert('Failed to create post: ' + error.message);
-        }
+        this.posts.unshift(newPost);
+        this.postIdCounter++;
+        this.savePostsToLocalStorage();
+        this.savePostIdCounter();
+        this.clearForm();
+        this.renderPosts();
+        console.log('Post created in localStorage:', newPost);
     }
 
     clearForm() {
@@ -145,40 +158,61 @@ class SupabaseCommunityForum {
             return;
         }
 
-        if (!this.isConfigured || !this.supabaseLoaded) {
-            if (this.fallbackForum) {
-                this.fallbackForum.addReply(postId, author, content);
-                this.posts = this.fallbackForum.posts;
-                this.renderPosts();
-                return;
+        const authorName = author.trim() || 'Anonymous';
+        const replyContent = content.trim();
+
+        if (this.isConfigured) {
+            // Try Supabase first
+            try {
+                console.log('Creating reply in Supabase...');
+                const { data, error } = await supabase
+                    .from('replies')
+                    .insert([
+                        {
+                            post_id: postId,
+                            content: replyContent,
+                            author: authorName
+                        }
+                    ])
+                    .select();
+
+                if (error) {
+                    console.error('Error creating reply in Supabase:', error);
+                    // Fall back to localStorage
+                    this.addReplyInLocalStorage(postId, authorName, replyContent);
+                } else {
+                    console.log('Reply created successfully in Supabase:', data);
+                    await this.loadPostsFromSupabase();
+                    this.renderPosts();
+                }
+            } catch (error) {
+                console.error('Error creating reply in Supabase:', error);
+                // Fall back to localStorage
+                this.addReplyInLocalStorage(postId, authorName, replyContent);
             }
-            return;
+        } else {
+            // Use localStorage
+            this.addReplyInLocalStorage(postId, authorName, replyContent);
         }
+    }
 
-        try {
-            console.log('Creating reply in Supabase...');
-            const { data, error } = await supabase
-                .from('replies')
-                .insert([
-                    {
-                        post_id: postId,
-                        content: content.trim(),
-                        author: author.trim() || 'Anonymous'
-                    }
-                ])
-                .select();
+    addReplyInLocalStorage(postId, author, content) {
+        const post = this.posts.find(p => p.id == postId);
+        if (post) {
+            const reply = {
+                id: Date.now(),
+                author: author,
+                content: content,
+                created_at: new Date().toISOString()
+            };
 
-            if (error) {
-                console.error('Error creating reply:', error);
-                alert('Failed to create reply: ' + error.message);
-                return;
+            if (!post.replies) {
+                post.replies = [];
             }
-
-            console.log('Reply created successfully:', data);
-            await this.loadPostsFromSupabase();
-        } catch (error) {
-            console.error('Error creating reply:', error);
-            alert('Failed to create reply: ' + error.message);
+            post.replies.push(reply);
+            this.savePostsToLocalStorage();
+            this.renderPosts();
+            console.log('Reply added in localStorage:', reply);
         }
     }
 
@@ -227,7 +261,7 @@ class SupabaseCommunityForum {
             container.innerHTML = `
                 <div class="no-posts">
                     <p>No posts yet. Be the first to share something with the community!</p>
-                    ${!this.isConfigured ? '<p><em>Note: Currently using local storage. Connect to Supabase for shared posts.</em></p>' : ''}
+                    ${!this.isConfigured ? '<p><em>Note: Posts are stored locally on your device. For shared posts across all users, Supabase connection is needed.</em></p>' : ''}
                 </div>
             `;
             return;
@@ -292,146 +326,15 @@ class SupabaseCommunityForum {
         div.textContent = text;
         return div.innerHTML;
     }
-
-    renderError(message) {
-        const container = document.getElementById('postsContainer');
-        if (container) {
-            container.innerHTML = `
-                <div class="error-message">
-                    <p>⚠️ ${message}</p>
-                    <button onclick="window.location.reload()">Try Again</button>
-                </div>
-            `;
-        }
-    }
-}
-
-// Fallback LocalStorage Forum
-class LocalStorageForum {
-    constructor() {
-        this.posts = this.loadPosts();
-        this.postIdCounter = this.getNextPostId();
-    }
-
-    loadPosts() {
-        const savedPosts = localStorage.getItem('communityPosts');
-        return savedPosts ? JSON.parse(savedPosts) : [];
-    }
-
-    savePosts() {
-        localStorage.setItem('communityPosts', JSON.stringify(this.posts));
-    }
-
-    getNextPostId() {
-        const savedCounter = localStorage.getItem('postIdCounter');
-        return savedCounter ? parseInt(savedCounter) + 1 : 1;
-    }
-
-    savePostIdCounter() {
-        localStorage.setItem('postIdCounter', this.postIdCounter.toString());
-    }
-
-    createPost(author, title, content) {
-        if (!title.trim() || !content.trim()) {
-            alert('Please fill in both title and content fields.');
-            return;
-        }
-
-        const newPost = {
-            id: this.postIdCounter,
-            author: author.trim() || 'Anonymous',
-            title: title.trim(),
-            content: content.trim(),
-            timestamp: new Date().toISOString(),
-            replies: []
-        };
-
-        this.posts.unshift(newPost);
-        this.postIdCounter++;
-        this.savePosts();
-        this.savePostIdCounter();
-    }
-
-    addReply(postId, author, content) {
-        if (!content.trim()) {
-            alert('Please enter a reply message.');
-            return;
-        }
-
-        const post = this.posts.find(p => p.id == postId);
-        if (post) {
-            const reply = {
-                id: Date.now(),
-                author: author.trim() || 'Anonymous',
-                content: content.trim(),
-                timestamp: new Date().toISOString()
-            };
-
-            post.replies.push(reply);
-            this.savePosts();
-        }
-    }
-
-    formatTimestamp(timestamp) {
-        const date = new Date(timestamp);
-        const now = new Date();
-        const diffInHours = (now - date) / (1000 * 60 * 60);
-
-        if (diffInHours < 1) {
-            const diffInMinutes = Math.floor((now - date) / (1000 * 60));
-            return diffInMinutes <= 1 ? 'Just now' : `${diffInMinutes} minutes ago`;
-        } else if (diffInHours < 24) {
-            return `${Math.floor(diffInHours)} hours ago`;
-        } else {
-            return date.toLocaleDateString();
-        }
-    }
-
-    toggleReplyBox(postId) {
-        const replyBox = document.getElementById(`replyBox-${postId}`);
-        if (!replyBox) return;
-        
-        const isHidden = replyBox.style.display === 'none' || !replyBox.style.display;
-        
-        document.querySelectorAll('.reply-box').forEach(box => {
-            box.style.display = 'none';
-        });
-
-        replyBox.style.display = isHidden ? 'block' : 'none';
-        
-        if (isHidden) {
-            const textarea = replyBox.querySelector('textarea');
-            if (textarea) textarea.focus();
-        }
-    }
-
-    submitReply(postId) {
-        const authorInput = document.getElementById(`replyAuthor-${postId}`);
-        const contentInput = document.getElementById(`replyContent-${postId}`);
-        
-        if (!authorInput || !contentInput) return;
-        
-        this.addReply(postId, authorInput.value, contentInput.value);
-        
-        authorInput.value = '';
-        contentInput.value = '';
-        this.toggleReplyBox(postId);
-    }
-
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
 }
 
 // Initialize forum when page loads
 let forum;
 
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('DOM loaded, initializing forum...');
+    console.log('DOM loaded, initializing community forum...');
     
-    forum = new SupabaseCommunityForum();
+    forum = new CommunityForum();
     
     // Initialize the forum
     await forum.init();
@@ -460,5 +363,5 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Make forum available globally for HTML onclick handlers
     window.forum = forum;
     
-    console.log('Forum initialization complete');
+    console.log('Community forum initialization complete');
 });

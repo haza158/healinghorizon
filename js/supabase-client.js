@@ -50,14 +50,17 @@ const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY');
 // Initialize Supabase client
 async function initializeSupabase() {
     const loaded = await loadSupabase();
-    if (loaded && createClient && supabaseUrl && supabaseAnonKey) {
-        supabase = createClient(supabaseUrl, supabaseAnonKey);
-        console.log('Supabase client initialized successfully with URL:', supabaseUrl);
-        return true;
+    if (loaded && createClient && supabaseUrl && supabaseAnonKey && supabaseUrl !== 'undefined' && supabaseAnonKey !== 'undefined') {
+        try {
+            supabase = createClient(supabaseUrl, supabaseAnonKey);
+            console.log('Supabase client initialized successfully with URL:', supabaseUrl);
+            return true;
+        } catch (error) {
+            console.warn('Failed to initialize Supabase client:', error);
+            return false;
+        }
     } else {
-        console.log('Supabase could not be loaded or credentials missing - using localStorage fallback');
-        console.log('URL:', supabaseUrl ? 'Present' : 'Missing');
-        console.log('Key:', supabaseAnonKey ? 'Present' : 'Missing');
+        console.log('Supabase credentials not available - using localStorage for community forum');
         return false;
     }
 }
@@ -67,6 +70,8 @@ const isSupabaseConfigured = () => {
     return supabase !== null &&
            supabaseUrl && 
            supabaseAnonKey &&
+           supabaseUrl !== 'undefined' &&
+           supabaseAnonKey !== 'undefined' &&
            supabaseUrl.includes('supabase.co');
 };
 
