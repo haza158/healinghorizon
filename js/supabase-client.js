@@ -1,5 +1,5 @@
 // Supabase client configuration
-import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js@2';
+import { createClient } from 'https://unpkg.com/@supabase/supabase-js@2.39.0/dist/esm/supabase.mjs';
 
 // Get environment variables - check multiple sources
 const getEnvVar = (name) => {
