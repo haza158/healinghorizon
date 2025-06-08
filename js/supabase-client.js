@@ -21,8 +21,8 @@ const getEnvVar = (name) => {
     return null;
 };
 
-const supabaseUrl = getEnvVar('VITE_SUPABASE_URL') || 'your_supabase_url_here';
-const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY') || 'your_supabase_anon_key_here';
+const supabaseUrl = getEnvVar('VITE_SUPABASE_URL') || 'https://efvxihgndvaevspelpsa.supabase.co';
+const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmdnhpaGduZHZhZXZzcGVscHNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzOTQ0NTksImV4cCI6MjA2NDk3MDQ1OX0.Nwzeta4FOJGRC0J0xam8AwY6MUbnj7QxDV_MqwsaX2c';
 
 // Create Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
