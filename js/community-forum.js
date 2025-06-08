@@ -39,6 +39,15 @@ export default class SharedCommunityForum {
       { author, title, content }
     ]);
 
+    const { error } = await supabase.from('posts').insert([
+      {
+        author,
+        title,
+        content,
+        creator_id: userId
+      }
+    ]);
+
     if (error) {
       console.error('Failed to post:', error);
       alert('Could not share post');
@@ -56,6 +65,15 @@ export default class SharedCommunityForum {
       { post_id: postId, author, content }
     ]);
 
+    const { error } = await supabase.from('replies').insert([
+      {
+        post_id: postId,
+        author,
+        content,
+        creator_id: userId
+      }
+    ]);
+
     if (error) {
       console.error('Failed to reply:', error);
       alert('Could not post reply');
@@ -64,6 +82,41 @@ export default class SharedCommunityForum {
       this.renderPosts();
     }
   }
+async deletePost(postId) {
+  const confirmDelete = confirm('Are you sure you want to delete this post?');
+  if (!confirmDelete) return;
+
+  const { error } = await supabase
+    .from('posts')
+    .delete()
+    .eq('id', postId);
+
+  if (error) {
+    console.error('Failed to delete post:', error);
+    alert('Could not delete post');
+  } else {
+    await this.loadPosts();
+    this.renderPosts();
+  }
+}
+
+async deleteReply(replyId) {
+  const confirmDelete = confirm('Delete this reply?');
+  if (!confirmDelete) return;
+
+  const { error } = await supabase
+    .from('replies')
+    .delete()
+    .eq('id', replyId);
+
+  if (error) {
+    console.error('Failed to delete reply:', error);
+    alert('Could not delete reply');
+  } else {
+    await this.loadPosts();
+    this.renderPosts();
+  }
+}
 
   clearForm() {
     document.getElementById('authorName').value = '';
@@ -74,6 +127,7 @@ export default class SharedCommunityForum {
   renderPosts() {
     const container = document.getElementById('postsContainer');
     container.innerHTML = '';
+    const currentUserId = userId;
 
     if (this.posts.length === 0) {
       container.innerHTML = '<p>No posts yet.</p>';
