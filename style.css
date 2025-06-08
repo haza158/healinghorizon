@@ -299,10 +299,11 @@ footer{
         height: 1000px; /* More vertical space for phones */
     }
 }
+
 /* FORUM CONTAINER */
 .forum-container {
-    max-width: 800px;
-    margin: 0 auto;
+    max-width: 900px;
+    margin: 20px auto;
     background-color: #ffffff;
     border-radius: 12px;
     padding: 30px;
@@ -312,9 +313,17 @@ footer{
 /* TITLE */
 .forum-container h2 {
     color: #336633;
-    margin-bottom: 25px;
+    margin-bottom: 15px;
     font-size: 28px;
     text-align: center;
+}
+
+.forum-description {
+    text-align: center;
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 16px;
+    line-height: 1.5;
 }
 
 /* INPUT SECTION */
@@ -323,6 +332,10 @@ footer{
     flex-direction: column;
     gap: 12px;
     margin-bottom: 30px;
+    background: #f8fffe;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #e0f2f1;
 }
   
 input, textarea {
@@ -331,6 +344,14 @@ input, textarea {
     border: 1px solid #ccc;
     font-size: 16px;
     width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+    border-color: #588157;
+    box-shadow: 0 0 0 2px rgba(88, 129, 87, 0.1);
 }
   
 button {
@@ -342,41 +363,104 @@ button {
     border-radius: 6px;
     cursor: pointer;
     font-weight: bold;
-    transition: background 0.3s ease;
+    transition: all 0.3s ease;
+    font-family: inherit;
 }
   
 button:hover {
     background-color: #99e2c6;
+    transform: translateY(-1px);
+}
+
+.cancel-btn {
+    background-color: #f0f0f0;
+    color: #666;
+    margin-left: 10px;
+}
+
+.cancel-btn:hover {
+    background-color: #e0e0e0;
 }
   
 /* POSTS */
 .post {
-    background: #e0f7e9;
+    background: #f9fffe;
     padding: 20px;
     border-radius: 10px;
     margin-bottom: 20px;
-    position: relative;
+    border: 1px solid #e8f5e8;
+    transition: box-shadow 0.3s ease;
+}
+
+.post:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.post-header {
+    margin-bottom: 10px;
 }
   
 .post h4 {
-    margin-bottom: 5px;
+    margin: 0 0 5px 0;
     color: #2e4a35;
     font-size: 18px;
+    line-height: 1.3;
+}
+
+.post-meta {
+    font-size: 14px;
+    color: #666;
+    font-style: italic;
 }
   
-.post p {
-    margin-bottom: 10px;
+.post-content {
+    margin: 15px 0;
     font-size: 16px;
+    line-height: 1.6;
+    color: #333;
+}
+
+.post-actions {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #e8f5e8;
 }
   
 /* REPLIES */
+.replies-container {
+    margin-top: 15px;
+}
+
 .reply {
     background: #fff9e6;
-    padding: 10px;
+    padding: 15px;
     margin-top: 10px;
-    border-radius: 6px;
+    border-radius: 8px;
     margin-left: 20px;
-    font-size: 15px;
+    border-left: 3px solid #ffd54f;
+}
+
+.reply-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.reply-header strong {
+    color: #2e4a35;
+    font-size: 14px;
+}
+
+.reply-time {
+    font-size: 12px;
+    color: #888;
+}
+
+.reply p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
 }
   
 /* REPLY BUTTON + BOX */
@@ -384,22 +468,47 @@ button:hover {
     background-color: #c7d2fe;
     margin-top: 10px;
     font-size: 14px;
+    padding: 8px 16px;
+}
+
+.reply-button:hover {
+    background-color: #a5b4fc;
 }
   
 .reply-box {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
     background-color: #f7faff;
     padding: 15px;
     border-radius: 10px;
-    margin-top: 10px;
+    margin-top: 15px;
     margin-left: 20px;
+    border: 1px solid #e0e7ff;
+}
+
+.reply-box input,
+.reply-box textarea {
+    margin-bottom: 10px;
+}
+
+.reply-box button {
+    margin-right: 10px;
+}
+
+.no-posts {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    font-style: italic;
+}
+
+.no-posts p {
+    font-size: 16px;
+    margin: 0;
 }
   
   /* RESPONSIVE */
 @media (max-width: 768px) {
     .forum-container {
+      margin: 10px;
       padding: 20px;
     }
   
@@ -412,7 +521,13 @@ button:hover {
     }
   
     .reply {
-      margin-left: 0;
+      margin-left: 10px;
+    }
+
+    .reply-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
     }
 }
 

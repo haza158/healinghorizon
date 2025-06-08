@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blog 1</title>
+    <title>Community Forum</title>
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -25,17 +25,32 @@
             <div class="menu-toggle" onclick="toggleMenu()">☰</div>
         </nav>
     </header>
+
     <main>
-        <article class="blog-post">
-            <h1>Blog Post Title</h1>
-            <p>Published on: <time datetime="2023-10-01">October 1, 2023</time></p>
-            <img src="sample-image.jpg" alt="Blog Post Image" class="post-image" />
-            <p>This is the content of the blog post. Here you can write about various topics related to healing, wellness, and personal stories.</p>
-        </article>
+        <div class="forum-container">
+            <h2>Community Forum</h2>
+            <p class="forum-description">Share your thoughts, ask questions, and connect with our supportive community. This is a safe space for meaningful conversations about healing and wellness.</p>
+            
+            <!-- Create New Post Section -->
+            <div class="post-box">
+                <input type="text" id="authorName" placeholder="Your name (optional)" maxlength="50">
+                <input type="text" id="postTitle" placeholder="Post title" maxlength="100" required>
+                <textarea id="postContent" placeholder="Share your thoughts..." rows="4" maxlength="1000" required></textarea>
+                <button onclick="createPost()">Share Post</button>
+            </div>
+
+            <!-- Posts Container -->
+            <div id="postsContainer">
+                <!-- Posts will be dynamically loaded here -->
+            </div>
+        </div>
     </main>
+
     <footer>
         <p>&copy; 2023 The Healing Horizon. All rights reserved.</p>
     </footer>
+
     <script src="script.js"></script>
+    <script src="community.js"></script>
 </body>
 </html>
