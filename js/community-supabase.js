@@ -1,30 +1,35 @@
 // Community Forum with Supabase Integration
-import { supabase, isSupabaseConfigured } from './supabase-client.js';
+import { supabase, isSupabaseConfigured, initializeSupabase } from './supabase-client.js';
 
 class SupabaseCommunityForum {
     constructor() {
-        this.isConfigured = isSupabaseConfigured();
+        this.isConfigured = false;
         this.fallbackForum = null;
         this.posts = [];
-        
-        if (!this.isConfigured) {
-            console.warn('Supabase not configured, falling back to localStorage');
-            this.initializeFallback();
-        }
+        this.supabaseLoaded = false;
     }
 
     async init() {
         console.log('Initializing forum...');
-        if (this.isConfigured) {
-            await this.loadPostsFromSupabase();
-        } else {
+        
+        // Try to initialize Supabase
+        this.supabaseLoaded = await initializeSupabase();
+        this.isConfigured = this.supabaseLoaded && isSupabaseConfigured();
+        
+        console.log('Supabase loaded:', this.supabaseLoaded);
+        console.log('Supabase configured:', this.isConfigured);
+        
+        if (!this.supabaseLoaded || !this.isConfigured) {
+            console.log('Using localStorage fallback');
+            this.initializeFallback();
             if (this.fallbackForum) {
-                // Use fallback forum's posts
                 this.posts = this.fallbackForum.posts;
                 this.renderPosts();
             } else {
                 this.renderConnectionMessage();
             }
+        } else {
+            await this.loadPostsFromSupabase();
         }
     }
 
@@ -80,15 +85,18 @@ class SupabaseCommunityForum {
             return;
         }
 
-        if (!this.isConfigured) {
+        if (!this.isConfigured || !this.supabaseLoaded) {
+            console.log('Using fallback forum for post creation');
             if (this.fallbackForum) {
                 this.fallbackForum.createPost(author, title, content);
                 this.posts = this.fallbackForum.posts;
                 this.renderPosts();
                 this.clearForm();
                 return;
+            } else {
+                console.error('Fallback forum not initialized');
+                return;
             }
-            return;
         }
 
         try {
@@ -134,7 +142,7 @@ class SupabaseCommunityForum {
             return;
         }
 
-        if (!this.isConfigured) {
+        if (!this.isConfigured || !this.supabaseLoaded) {
             if (this.fallbackForum) {
                 this.fallbackForum.addReply(postId, author, content);
                 this.posts = this.fallbackForum.posts;
@@ -356,58 +364,6 @@ class LocalStorageForum {
             post.replies.push(reply);
             this.savePosts();
         }
-    }
-
-    formatTimestamp(timestamp) {
-        const date = new Date(timestamp);
-        const now = new Date();
-        const diffInHours = (now - date) / (1000 * 60 * 60);
-
-        if (diffInHours < 1) {
-            const diffInMinutes = Math.floor((now - date) / (1000 * 60));
-            return diffInMinutes <= 1 ? 'Just now' : `${diffInMinutes} minutes ago`;
-        } else if (diffInHours < 24) {
-            return `${Math.floor(diffInHours)} hours ago`;
-        } else {
-            return date.toLocaleDateString();
-        }
-    }
-
-    toggleReplyBox(postId) {
-        const replyBox = document.getElementById(`replyBox-${postId}`);
-        if (!replyBox) return;
-        
-        const isHidden = replyBox.style.display === 'none' || !replyBox.style.display;
-        
-        document.querySelectorAll('.reply-box').forEach(box => {
-            box.style.display = 'none';
-        });
-
-        replyBox.style.display = isHidden ? 'block' : 'none';
-        
-        if (isHidden) {
-            const textarea = replyBox.querySelector('textarea');
-            if (textarea) textarea.focus();
-        }
-    }
-
-    submitReply(postId) {
-        const authorInput = document.getElementById(`replyAuthor-${postId}`);
-        const contentInput = document.getElementById(`replyContent-${postId}`);
-        
-        if (!authorInput || !contentInput) return;
-        
-        this.addReply(postId, authorInput.value, contentInput.value);
-        
-        authorInput.value = '';
-        contentInput.value = '';
-        this.toggleReplyBox(postId);
-    }
-
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
 }
 
