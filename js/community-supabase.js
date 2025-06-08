@@ -5,13 +5,12 @@ class SupabaseCommunityForum {
     constructor() {
         this.isConfigured = isSupabaseConfigured();
         this.fallbackForum = null;
+        this.posts = [];
         
         if (!this.isConfigured) {
             console.warn('Supabase not configured, falling back to localStorage');
             this.initializeFallback();
         }
-        
-        this.init();
     }
 
     async init() {
@@ -96,11 +95,15 @@ class SupabaseCommunityForum {
             }
 
             // Clear form
-            document.getElementById('authorName').value = '';
-            document.getElementById('postTitle').value = '';
-            document.getElementById('postContent').value = '';
+            const authorInput = document.getElementById('authorName');
+            const titleInput = document.getElementById('postTitle');
+            const contentInput = document.getElementById('postContent');
+            
+            if (authorInput) authorInput.value = '';
+            if (titleInput) titleInput.value = '';
+            if (contentInput) contentInput.value = '';
 
-            // Reload posts
+            // Reload posts to show the new post
             await this.loadPostsFromSupabase();
         } catch (error) {
             console.error('Error creating post:', error);
@@ -204,7 +207,7 @@ class SupabaseCommunityForum {
                 <p class="post-content">${this.escapeHtml(post.content)}</p>
                 
                 <div class="post-actions">
-                    <button class="reply-button" onclick="forum.toggleReplyBox('${post.id}')">
+                    <button class="reply-button" onclick="window.forum.toggleReplyBox('${post.id}')">
                         Reply (${post.replies ? post.replies.length : 0})
                     </button>
                 </div>
@@ -213,8 +216,8 @@ class SupabaseCommunityForum {
                 <div id="replyBox-${post.id}" class="reply-box" style="display: none;">
                     <input type="text" id="replyAuthor-${post.id}" placeholder="Your name (optional)" maxlength="50">
                     <textarea id="replyContent-${post.id}" placeholder="Write your reply..." rows="3" maxlength="500"></textarea>
-                    <button onclick="forum.submitReply('${post.id}')">Post Reply</button>
-                    <button onclick="forum.toggleReplyBox('${post.id}')" class="cancel-btn">Cancel</button>
+                    <button onclick="window.forum.submitReply('${post.id}')">Post Reply</button>
+                    <button onclick="window.forum.toggleReplyBox('${post.id}')" class="cancel-btn">Cancel</button>
                 </div>
 
                 <!-- Replies -->
@@ -401,7 +404,7 @@ class LocalStorageForum {
                 <p class="post-content">${this.escapeHtml(post.content)}</p>
                 
                 <div class="post-actions">
-                    <button class="reply-button" onclick="forum.toggleReplyBox(${post.id})">
+                    <button class="reply-button" onclick="window.forum.toggleReplyBox(${post.id})">
                         Reply (${post.replies.length})
                     </button>
                 </div>
@@ -409,8 +412,8 @@ class LocalStorageForum {
                 <div id="replyBox-${post.id}" class="reply-box" style="display: none;">
                     <input type="text" id="replyAuthor-${post.id}" placeholder="Your name (optional)" maxlength="50">
                     <textarea id="replyContent-${post.id}" placeholder="Write your reply..." rows="3" maxlength="500"></textarea>
-                    <button onclick="forum.submitReply(${post.id})">Post Reply</button>
-                    <button onclick="forum.toggleReplyBox(${post.id})" class="cancel-btn">Cancel</button>
+                    <button onclick="window.forum.submitReply(${post.id})">Post Reply</button>
+                    <button onclick="window.forum.toggleReplyBox(${post.id})" class="cancel-btn">Cancel</button>
                 </div>
 
                 <div class="replies-container">
@@ -451,19 +454,22 @@ class LocalStorageForum {
 // Initialize forum when page loads
 let forum;
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     forum = new SupabaseCommunityForum();
+    
+    // Initialize the forum
+    await forum.init();
     
     // Set up event listener for create post button
     const createPostButton = document.getElementById('createPostButton');
     if (createPostButton) {
-        createPostButton.addEventListener('click', function() {
+        createPostButton.addEventListener('click', async function() {
             const author = document.getElementById('authorName').value;
             const title = document.getElementById('postTitle').value;
             const content = document.getElementById('postContent').value;
             
             if (forum) {
-                forum.createPost(author, title, content);
+                await forum.createPost(author, title, content);
             }
         });
     }
