@@ -453,19 +453,21 @@ let forum;
 
 document.addEventListener('DOMContentLoaded', function() {
     forum = new SupabaseCommunityForum();
-});
-
-// Global function for creating posts (called from HTML)
-function createPost() {
-    const author = document.getElementById('authorName').value;
-    const title = document.getElementById('postTitle').value;
-    const content = document.getElementById('postContent').value;
     
-    if (forum) {
-        forum.createPost(author, title, content);
+    // Set up event listener for create post button
+    const createPostButton = document.getElementById('createPostButton');
+    if (createPostButton) {
+        createPostButton.addEventListener('click', function() {
+            const author = document.getElementById('authorName').value;
+            const title = document.getElementById('postTitle').value;
+            const content = document.getElementById('postContent').value;
+            
+            if (forum) {
+                forum.createPost(author, title, content);
+            }
+        });
     }
-}
-
-// Make forum available globally for HTML onclick handlers
-window.forum = forum;
-window.createPost = createPost;
+    
+    // Make forum available globally for HTML onclick handlers
+    window.forum = forum;
+});
