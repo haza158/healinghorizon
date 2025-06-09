@@ -14,6 +14,7 @@ const supabase = createClient(
 export default class SharedCommunityForum {
   constructor() {
     this.posts = [];
+    this.postsPerPage = 10; // limit per page
   }
 
   async init() {
@@ -22,13 +23,18 @@ export default class SharedCommunityForum {
   }
 
   async loadPosts() {
+    const container = document.getElementById('postsContainer');
+    container.innerHTML = '<p>Loading posts...</p>'; // Show loading while fetching
+
     const { data, error } = await supabase
       .from('posts')
       .select('*, replies(*)')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(this.postsPerPage);
 
     if (error) {
       console.error('Error loading posts:', error);
+      container.innerHTML = '<p>Failed to load posts. Please try again later.</p>';
     } else {
       this.posts = data;
     }
