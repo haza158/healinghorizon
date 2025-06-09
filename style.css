@@ -382,6 +382,11 @@ footer{
 .consent-label input[type="checkbox"] {
     margin: 0;                 /* Remove extra spacing browsers add */
 }
+/* Optional: Add a margin to separate button from checkbox if needed */
+.story-form-container form button {
+    display: block;  /* Forces it to be on a new line */
+    margin-top: 20px;
+}
 
 /* FORUM CONTAINER */
 .forum-container {
