@@ -21,15 +21,14 @@ form.addEventListener('submit', async (e) => {
     return;
   }
 
-  const { error } = await supabase.from('contact_messages').insert([
-    { name, email, message }
-  ]);
-
-  if (error) {
-    console.error('Error submitting form:', error);
-    responseEl.textContent = 'Failed to send message. Please try again.';
-  } else {
-    responseEl.textContent = 'Thank you for contacting us!';
-    form.reset();
-  }
+ const { error } = await supabase.from('contact_messages').insert([
+  { name, email, message }
+ ]);
+if (error) {
+  console.error('Error submitting form:', error);
+  responseEl.textContent = 'Failed to send message. Please try again.';
+} else {
+  responseEl.textContent = 'Thank you for contacting us!';
+  form.reset();
+}
 });
