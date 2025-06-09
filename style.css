@@ -323,6 +323,57 @@ footer{
     margin-top: 15px;
     font-weight: bold;
 }
+/* Share Your Story Form */
+.story-form-container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 20px;
+    text-align: center;
+}
+
+.story-form-container h2 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.story-form-container p {
+    font-size: 1rem;
+    margin-bottom: 20px;
+}
+
+.story-form-container form input,
+.story-form-container form textarea {
+    width: 100%;
+    margin: 10px 0;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.story-form-container form button {
+    padding: 10px 20px;
+    background-color: #6c63ff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.story-form-container form button:hover {
+    background-color: #5753d9;
+}
+
+.story-form-container #storyFormResponse {
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+.consent-label {
+    display: block;
+    margin: 15px 0;
+    font-size: 0.95rem;
+    text-align: left;
+}
 /* Responsive height adjustment */
 @media (max-width: 600px) {
     .form-container iframe {
