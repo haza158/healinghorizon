@@ -1,9 +1,11 @@
 // js/community-forum.js
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
+// ✅ Get or set unique user ID
 const userId = localStorage.getItem('communityUserId') || `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 localStorage.setItem('communityUserId', userId);
 
+// ✅ Supabase connection
 const supabase = createClient(
   'https://efvxihgndvaevspelpsa.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmdnhpaGduZHZhZXZzcGVscHNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzOTQ0NTksImV4cCI6MjA2NDk3MDQ1OX0.Nwzeta4FOJGRC0J0xam8AwY6MUbnj7QxDV_MqwsaX2c'
@@ -36,10 +38,6 @@ export default class SharedCommunityForum {
     if (!title || !content) return alert('Please fill in all fields.');
 
     const { error } = await supabase.from('posts').insert([
-      { author, title, content }
-    ]);
-
-    const { error } = await supabase.from('posts').insert([
       {
         author,
         title,
@@ -62,10 +60,6 @@ export default class SharedCommunityForum {
     if (!content) return alert('Reply cannot be empty.');
 
     const { error } = await supabase.from('replies').insert([
-      { post_id: postId, author, content }
-    ]);
-
-    const { error } = await supabase.from('replies').insert([
       {
         post_id: postId,
         author,
@@ -82,41 +76,42 @@ export default class SharedCommunityForum {
       this.renderPosts();
     }
   }
-async deletePost(postId) {
-  const confirmDelete = confirm('Are you sure you want to delete this post?');
-  if (!confirmDelete) return;
 
-  const { error } = await supabase
-    .from('posts')
-    .delete()
-    .eq('id', postId);
+  async deletePost(postId) {
+    const confirmDelete = confirm('Are you sure you want to delete this post?');
+    if (!confirmDelete) return;
 
-  if (error) {
-    console.error('Failed to delete post:', error);
-    alert('Could not delete post');
-  } else {
-    await this.loadPosts();
-    this.renderPosts();
+    const { error } = await supabase
+      .from('posts')
+      .delete()
+      .eq('id', postId);
+
+    if (error) {
+      console.error('Failed to delete post:', error);
+      alert('Could not delete post');
+    } else {
+      await this.loadPosts();
+      this.renderPosts();
+    }
   }
-}
 
-async deleteReply(replyId) {
-  const confirmDelete = confirm('Delete this reply?');
-  if (!confirmDelete) return;
+  async deleteReply(replyId) {
+    const confirmDelete = confirm('Delete this reply?');
+    if (!confirmDelete) return;
 
-  const { error } = await supabase
-    .from('replies')
-    .delete()
-    .eq('id', replyId);
+    const { error } = await supabase
+      .from('replies')
+      .delete()
+      .eq('id', replyId);
 
-  if (error) {
-    console.error('Failed to delete reply:', error);
-    alert('Could not delete reply');
-  } else {
-    await this.loadPosts();
-    this.renderPosts();
+    if (error) {
+      console.error('Failed to delete reply:', error);
+      alert('Could not delete reply');
+    } else {
+      await this.loadPosts();
+      this.renderPosts();
+    }
   }
-}
 
   clearForm() {
     document.getElementById('authorName').value = '';
@@ -144,6 +139,7 @@ async deleteReply(replyId) {
         </div>
         <div class="post-content">${post.content}</div>
         <button class="reply-btn" onclick="document.getElementById('replyBox-${post.id}').style.display='block'">Reply</button>
+        ${post.creator_id === currentUserId ? `<button class="delete-post-btn" onclick="forum.deletePost('${post.id}')">Delete Post</button>` : ''}
         <div class="reply-box" id="replyBox-${post.id}" style="display:none; margin-top:10px;">
           <input type="text" placeholder="Your name" id="replyAuthor-${post.id}" />
           <textarea placeholder="Your reply..." id="replyContent-${post.id}"></textarea>
@@ -154,6 +150,7 @@ async deleteReply(replyId) {
             <div class="reply">
               <div class="post-meta">${r.author || 'Anonymous'} • ${new Date(r.created_at).toLocaleString()}</div>
               <div>${r.content}</div>
+              ${r.creator_id === currentUserId ? `<button class="delete-post-btn" onclick="forum.deleteReply('${r.id}')">Delete Reply</button>` : ''}
             </div>
           `).join('')}
         </div>
