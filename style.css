@@ -369,15 +369,19 @@ footer{
 }
 
 /* Consent Checkbox and Label on Same Line */
+/* Consent Checkbox and Label on Same Line */
 .consent-label {
-    display: flex;
-    align-items: center;
+    display: inline-flex;      /* Force inline block */
+    align-items: center;       /* Vertically align */
     margin: 15px 0;
     font-size: 0.95rem;
-    justify-content: flex-start;
-    gap: 10px; /* Adds space between checkbox and text */
+    cursor: pointer;           /* Adds nice hover effect */
+    gap: 8px;                  /* Clean spacing between checkbox and text */
 }
 
+.consent-label input[type="checkbox"] {
+    margin: 0;                 /* Remove extra spacing browsers add */
+}
 
 /* FORUM CONTAINER */
 .forum-container {
