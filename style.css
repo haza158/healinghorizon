@@ -279,33 +279,50 @@ footer{
 }
 
 /*Forms*/
-form input, form textarea {
-  display: block;
-  width: 100%;
-  margin: 10px 0;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+/* Contact Page Centering */
+.contact-container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 20px;
+    text-align: center;
 }
 
-form button {
-  padding: 10px 20px;
-  background-color: #6c63ff;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+.contact-container h2 {
+    font-size: 2rem;
+    margin-bottom: 10px;
 }
 
-form button:hover {
-  background-color: #5753d9;
+.contact-container p {
+    font-size: 1rem;
+    margin-bottom: 20px;
+}
+
+.contact-container form input,
+.contact-container form textarea {
+    width: 100%;
+    margin: 10px 0;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.contact-container form button {
+    padding: 10px 20px;
+    background-color: #6c63ff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.contact-container form button:hover {
+    background-color: #5753d9;
 }
 
 #formResponse {
-  margin-top: 10px;
-  font-weight: bold;
+    margin-top: 15px;
+    font-weight: bold;
 }
-
 /* Responsive height adjustment */
 @media (max-width: 600px) {
     .form-container iframe {
