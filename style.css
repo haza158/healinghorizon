@@ -368,12 +368,16 @@ footer{
     font-weight: bold;
 }
 
+/* Consent Checkbox and Label on Same Line */
 .consent-label {
-    display: block;
+    display: flex;
+    align-items: center;
     margin: 15px 0;
     font-size: 0.95rem;
-    text-align: left;
+    justify-content: flex-start;
+    gap: 10px; /* Adds space between checkbox and text */
 }
+
 
 /* FORUM CONTAINER */
 .forum-container {
