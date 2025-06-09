@@ -374,12 +374,6 @@ footer{
     font-size: 0.95rem;
     text-align: left;
 }
-/* Responsive height adjustment */
-@media (max-width: 600px) {
-    .form-container iframe {
-        height: 1000px; /* More vertical space for phones */
-    }
-}
 
 /* FORUM CONTAINER */
 .forum-container {
