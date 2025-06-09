@@ -32,6 +32,22 @@
         <p>Thank you for being a part of our community!</p>
         <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSdns7p8TSsl8_TLtHK_K5B8VqcYqgqOtFmu79vdN-FhBCLG7g/viewform?embedded=true" width="600" height="520" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
     </section>
+    <main class="story-form-container">
+        <h2>Share Your Story</h2>
+        <p>We would love to hear your story. Please fill out the form below to share your experience with us.</p>
+        <p>Your story can help others who are going through similar experiences.</p>
+        <form id="storyForm">
+            <input type="text" id="storyName" placeholder="Your Name" required />
+            <textarea id="storyContent" placeholder="Your Story" rows="6" required></textarea>
+            <label for="consentCheckbox" class="consent-label">
+                <input type="checkbox" id="consentCheckbox" required />
+                I agree to have my story shared publicly.
+            </label>
+        <button type="submit">Submit Story</button>
+    </form>
+    <p id="storyFormResponse"></p>
+    </main>
+<script type="module" src="js/story-form.js"></script>
     </div>
     <footer>
       <p>&copy; 2023 The Healing Horizon. All rights reserved.</p>
