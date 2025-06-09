@@ -16,7 +16,7 @@ form.addEventListener('submit', async (e) => {
   const story = document.getElementById('storyContent').value.trim();
   const consent = document.getElementById('consentCheckbox').checked;
 
-  if (!name || !story || !consent) {
+  if (!name || !story) {
     responseEl.textContent = 'Please complete all fields and provide consent.';
     return;
   }
